@@ -52,7 +52,7 @@ green-deployment-6bb4f7c8c7-z5dtg   1/1     Running   0          5m3s
 kubia                               1/1     Running   0          122m
 ```
 
-Get pods logs:
+### Get pods logs:
 ```
 $ kubectl get pods                                                                
 NAME                                READY   STATUS    RESTARTS   AGE
@@ -104,7 +104,7 @@ IPs:
 Deployment containerPort and server ListenAndServe port must be the same
 
 
-Using a service:
+### Using a service:
 
 * Define the service
 * Apply the service
@@ -132,31 +132,31 @@ Add ingress and ingress controller (kubernetes ingress-nginx) type NodePort.
 
 Steps:
 
-1st step - Build go binary
+### 1st step - Build go binary
 ```
 go build server-blue.go 
 go build server-green.go 
 ```
 
-2nd setp - Generate docker images
+### 2nd setp - Generate docker images
 ```
 docker build -t server-blue . 
 docker build -t server-green . 
 ```
 
-3rd step - Generate kind-config and create kind cluster with this configuration. Delete previous clusters
+### 3rd step - Generate kind-config and create kind cluster with this configuration. Delete previous clusters
 ```
 kind delete cluster
 kind create cluster --config=kind-config.yaml 
 ```
 
-4th step - Load images in the cluster
+### 4th step - Load images in the cluster
 ```
 kind load docker-image server-green:latest
 kind load docker-image server-blue:latest
 ```
 
-5th step - Apply deployments, services and ingress
+### 5th step - Apply deployments, services and ingress
 ```
 kubectl apply -f blue-deployment.yaml
 kubectl apply -f green-deployment.yaml
@@ -167,7 +167,7 @@ kubectl apply -f ingress.yaml
 
 ! Important to add annotations in ingress.yaml,
 
-6th step - Install ingress controller
+### 6th step - Install ingress controller
 ```
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
@@ -176,11 +176,74 @@ helm install ingress-nginx ingress-nginx/ingress-nginx --set controller.service.
 
 ! Check extraPortMappings containerPort in kind-config to match value controller.service.nodePorts.http=30000.
 
-7th step - Test connection:
+### 7th step - Test connection:
 ```
 curl localhost:8080/blue
 Hi, I'm Blue
 curl localhost:8080/green
 Hi, I'm Green
 ```
+
+### Ports order
+
+Request:8080 -> 8080:kind-cluster:30000 -> 30000:ingress-controller:ingress:8080 -> 8080:services
+
+
+## Task 4.3
+
+Add ingress and ingress controller (kubernetes ingress-nginx) type LoadBalancer.
+
+Same 1st to 4th step from task 4.2.
+
+### 5th step - Apply deployments, services and ingress
+```
+kubectl apply -f blue-deployment.yaml
+kubectl apply -f green-deployment.yaml
+kubectl apply -f blue-service.yaml
+kubectl apply -f green-service.yaml
+kubectl apply -f ingress2.yaml
+```
+
+! Using ingress2.yaml without setting the host url.
+
+
+### 6th step - Allow king using load balancer. 
+Check [this](https://kind.sigs.k8s.io/docs/user/loadbalancer/).
+
+```
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/namespace.yaml
+kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)" 
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/master/manifests/metallb.yaml
+docker network inspect -f '{{.IPAM.Config}}' kind
+```
+The output will contain a cidr such as 172.19.0.0/16. We want our loadbalancer IP range to come from this subclass. Mach the configMap.yaml addresses with the obtained cidr.
+```
+kubectl apply -f configMap.yaml
+```
+
+### 7th step - Install ingress controller
+```
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx
+```
+
+### 8th step - Get ingress controller external IP
+```
+kubectl get svc
+NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)                        AGE
+ingress-nginx-controller             LoadBalancer   10.96.67.21     172.18.255.200   80:31465/TCP,443:30825/TCP   12m
+```
+
+### 9th step - Test connection:
+```
+curl 172.18.255.200:80/blue
+Hi, I'm Blue
+curl 172.18.255.200:80/green
+Hi, I'm Green
+```
+
+### Ports order
+
+Request:80 -> 80:ingress-controller-type-loadbalancer:ingress:8080 -> 8080:services
 
