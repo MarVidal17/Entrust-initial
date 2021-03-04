@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: blue
+  template:
+    metadata:
+      labels:
+        name: blue
+    spec:
+      containers:
+      - name: server-blue
+        image: server-blue:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
