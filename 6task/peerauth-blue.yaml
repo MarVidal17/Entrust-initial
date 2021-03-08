@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: blue-peerauth
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: blue
+  mtls:
+    mode: STRICT
