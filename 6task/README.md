@@ -9,8 +9,8 @@ Working inside folder initial.
 ```
 kubectl create serviceaccount green-account
 kubectl create serviceaccount blue-account
-kubectl get authorizationpolicy
 ```
+
 ### Step 2. Add serviceAccountName in deployments:
 
 ```
