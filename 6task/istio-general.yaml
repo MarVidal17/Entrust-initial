@@ -1,0 +1,21 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: istio-system
+spec:
+  {}
+
+# Following policy does not work as it is an specified DENY
+# See: https://istio.io/latest/docs/reference/config/security/authorization-policy/
+# apiVersion: security.istio.io/v1beta1
+# kind: AuthorizationPolicy
+# metadata:
+#  name: deny-all
+#  namespace: istio-system
+# spec:
+#  action: DENY
+#  rules:
+#  - {}
+
+

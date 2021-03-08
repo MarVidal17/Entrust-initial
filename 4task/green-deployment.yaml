@@ -12,6 +12,7 @@ spec:
       labels:
         name: green
     spec:
+      serviceAccountName: green-account
       containers:
       - name: server-green
         image: server-green:latest

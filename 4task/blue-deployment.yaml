@@ -2,16 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: blue
+  labels:
+    app: blue
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: blue
+      app: blue
   template:
     metadata:
       labels:
         name: blue
+        app: blue
     spec:
+      serviceAccountName: blue-account
       containers:
       - name: server-blue
         image: server-blue:latest
