@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: counter-deployment
+  labels:
+    app: counter
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: counter
+  template:
+    metadata:
+      labels:
+        name: counter
+        app: counter
+    spec:
+      containers:
+      - name: counter
+        image: counter:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+        volumeMounts:
+        - name: data
+          mountPath: /
+      volumes:
+      - name: data
+        emptyDir: {}
