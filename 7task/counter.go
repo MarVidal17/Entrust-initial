@@ -16,7 +16,7 @@ import (
 
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	filename := "counter.txt"
+	filename := "../data/counter.txt"
     var f *os.File
  
     counter := 0
