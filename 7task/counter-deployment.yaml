@@ -23,8 +23,9 @@ spec:
         - name: http
           containerPort: 8080
         volumeMounts:
-        - name: data
+        - name: counter-pv-storage
           mountPath: /data
       volumes:
-      - name: data
-        emptyDir: {}
+      - name: counter-pv-storage
+        persistentVolumeClaim:
+          claimName: counter-pvc
