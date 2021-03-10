@@ -5,9 +5,10 @@ metadata:
   labels:
     app: counter
 spec:
+  clusterIP: None
   ports:
     - name: http
       port: 8080
       targetPort: 8080
-  selector: 
+  selector:
     app: counter

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: counter-statefulset
+  labels:
+    app: counter
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: counter
+  serviceName: "counter-service"
+  template:
+    metadata:
+      labels:
+        name: counter
+        app: counter
+    spec:
+      containers:
+      - name: counter
+        image: counter:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+        volumeMounts:
+        - name: counter-pv-storage
+          mountPath: /data
+      volumes:
+      - name: counter-pv-storage
+        persistentVolumeClaim:
+          claimName: counter-pvc
