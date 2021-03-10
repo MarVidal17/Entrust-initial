@@ -128,6 +128,7 @@ Name:   counter-service.default.svc.cluster.local
 Address: 10.244.0.17
 Name:   counter-service.default.svc.cluster.local
 Address: 10.244.0.19
+
 kubectl exec -it counter-statefulset-0 -- sh 
 # curl 10.244.0.19:8080
 Counter incremented:  12    
@@ -136,11 +137,26 @@ Counter incremented:  12
 See that the counter continues as it uses the same default persistent storage as before.
 
 Let's check nslookup in deployment instead of statefulset:
+
 ```
 kubectl delete statefulset counter-statefulset
 kubectl delete services counter-service
 kubectl apply -f counter-deployment.yaml
 kubectl apply -f counter-service.yaml
+```
+
+```
+kubectl get svc 
+NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+counter-service   ClusterIP   10.108.82.200   <none>        8080/TCP   14s
+kubernetes        ClusterIP   10.96.0.1       <none>        443/TCP    28h
+
+kubectl exec dnsutils nslookup counter-service             
+Server:         10.96.0.10
+Address:        10.96.0.10#53
+
+Name:   counter-service.default.svc.cluster.local
+Address: 10.108.82.200
 ```
 
 
