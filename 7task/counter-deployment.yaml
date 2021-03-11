@@ -25,7 +25,12 @@ spec:
         volumeMounts:
         - name: counter-pv-storage
           mountPath: /data
-      volumes:
-      - name: counter-pv-storage
-        persistentVolumeClaim:
-          claimName: counter-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: counter-pv-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi

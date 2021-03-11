@@ -4,7 +4,7 @@
 1. Implementar un codi go que exposi un endpoint. Per cada crida a l'endpoint, aquest ha d'incrementar un contador guardat en un fitxer.
 2. Desplegar un deployment fent servir el codi del punt anterior. El deployment ha de ser multireplica i compartir el mateix contador entre les diferents repliques. Juntament amb el deployment, hauras de crear un service.
 3. Desplegar un statefulset amb diverses repliques fent servir el codi go anterior. Hauras de crear un headless service.
-4. En lloc de fer servir un volum compartit entre les diferents replicas, fes servir un volum x replica (aquesta prova fela tant amb el deployment com amb els statefulsets). No hauria d'implicar gaire canvi del q tens. Hauries d'observar un comportament diferent al atacar al service del deployment vs al atacar el headles service dels statefulset.
+4. Statefulset vs deployments
 5. Implementar un codi go que simplement faci un print dient alguna cosa.
 6. Desplegar un cronjob fent servir el codi del punt anterior.
 7. Crear un helm chart que empaqueti tant el deployment, com l'statefulset i el cronjob
@@ -103,8 +103,8 @@ kubectl apply -f counter-hlservice.yaml
 Check that the service is working:
 
 ```
-kubectl get pods                                                                                                               
-NAME                    READY   STATUS    RESTARTS   AGE                                                                                      
+kubectl get pods                              
+NAME                    READY   STATUS    RESTARTS   AGE
 counter-statefulset-0   1/1     Running   0          4s
 counter-statefulset-1   1/1     Running   0          3s
 counter-statefulset-2   1/1     Running   0          2s
@@ -131,10 +131,93 @@ Address: 10.244.0.19
 
 kubectl exec -it counter-statefulset-0 -- sh 
 # curl 10.244.0.19:8080
-Counter incremented:  12    
+Counter incremented:  12
+# curl counter-statefulset-1.counter-service:8080
+Counter incremented:  13
 ```
 
 See that the counter continues as it uses the same default persistent storage as before.
+
+### Persistent volumes
+
+If in counter-statefulset we have the following code inside the spec.templates.spec:
+```yaml
+volumes:
+- name: counter-pv-storage
+persistentVolumeClaim:
+    claimName: counter-pvc
+```
+only persistent volume claim will be created for the three recplicas. 
+
+Insted, if we have the following code inside the  kube:
+```yaml
+  volumeClaimTemplates:
+  - metadata:
+      name: counter-pv-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+```
+
+one volume claim will be created for each replica and pointing to different storages:
+
+```
+kubectl delete pvc counter-pvc
+kubectl delete statefulset counter-statefulset
+kubectl apply -f counter-statefulset.yaml
+kubectl get  pods
+NAME                    READY   STATUS    RESTARTS   AGE
+counter-statefulset-0   1/1     Running   0          10s
+counter-statefulset-1   1/1     Running   0          6s
+counter-statefulset-2   1/1     Running   0          3s
+dnsutils                1/1     Running   1          18h
+kubectl get pvc
+NAME                                       STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+counter-pv-storage-counter-statefulset-0   Bound    pvc-e1a3071d-5326-4d7c-9139-57d04e5b1213   1Gi        RWO            standard       68s
+counter-pv-storage-counter-statefulset-1   Bound    pvc-4f20145e-0f05-4ee4-b506-fbc3ee788f44   1Gi        RWO            standard       64s
+counter-pv-storage-counter-statefulset-2   Bound    pvc-e372bbbf-720c-4926-92be-e1328385bd2b   1Gi        RWO            standard       61s
+kubectl exec -it counter-statefulset-0 -- sh
+# curl counter-service:8080
+Counter incremented:  1
+# curl counter-service:8080
+Counter incremented:  2
+# curl counter-statefulset-1.counter-service:8080
+Counter incremented:  3
+# curl counter-statefulset-2.counter-service:8080
+Counter incremented:  1
+# curl counter-statefulset-0.counter-service:8080
+Counter incremented:  1
+# curl counter-service:8080
+Counter incremented:  2
+```
+
+Now, when pointing the service we do not know which pod we will reach.
+
+Check what happens when deleting one pod (curl counter-statefulset-1), if the counter continues (increments to 4).
+
+```
+kubectl delete pod counter-statefulset-1
+kubectl exec -it counter-statefulset-0 -- sh
+# curl counter-statefulset-1.counter-service:8080
+Counter incremented:  4
+```
+
+When deleting the counter statefulset the persitent counter claims persist:
+```
+kubectl delete statefulsets counter-statefulset
+kubectl get pvc                   
+NAME                                       STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+counter-pv-storage-counter-statefulset-0   Bound    pvc-f94a9cb3-efff-4395-857d-aa15ff038a2f   1Gi        RWO            standard       30s
+counter-pv-storage-counter-statefulset-1   Bound    pvc-8872e8a9-cb2f-4a37-b667-7fb2cb2fdc7c   1Gi        RWO            standard       26s
+counter-pv-storage-counter-statefulset-2   Bound    pvc-ac3ea46d-7739-4839-9232-8c4817d7b6ac   1Gi        RWO            standard       23s
+```
+
+## 7.4. Deployment vs. Statefulset behaviour
+
+### Nslookup in deployment
 
 Let's check nslookup in deployment instead of statefulset:
 
@@ -157,13 +240,55 @@ Address:        10.96.0.10#53
 
 Name:   counter-service.default.svc.cluster.local
 Address: 10.108.82.200
+kubectl get pods
+kubectl describe pod counter-deployment-bcd4d595-mgd7p 
+...
+IP:           10.244.0.7
+...
+kubectl exec -it counter-deployment-bcd4d595-r8bk8 -- sh
+# curl 10.244.0.7:8080
+Counter incremented:  14
+# curl counter-deployment-bcd4d595-mgd7p.counter-service:8080
+curl: (6) Could not resolve host: counter-deployment-bcd4d595-mgd7p.counter-service
+# curl counter-deployment-bcd4d595-mgd7p:8080
+curl: (6) Could not resolve host: counter-deployment-bcd4d595-mgd7p
+```
+See that you can not access through the pod name.
+
+Check new name and new IP if deleting the counter-deployment-bcd4d595-mgd7p pod:
+```
+kubectl delete pod counter-deployment-bcd4d595-mgd7p 
+kubectl get pods
+NAME                                READY   STATUS    RESTARTS   AGE
+counter-deployment-bcd4d595-6sfmx   1/1     Running   0          10s
+counter-deployment-bcd4d595-r8bk8   1/1     Running   1          16h
+counter-deployment-bcd4d595-zlb64   1/1     Running   1          16h
+kubectl describe pod counter-deployment-bcd4d595-6sfmx                                                      
+...                                                                                                            
+IP:           10.244.0.9
+...
 ```
 
+### Persistent volumes claims
 
-## 7.4. Deployment vs. Statefulset behaviour
+If we try to change the counter-deployment.yaml to add:
+```yaml
+  volumeClaimTemplates:
+  - metadata:
+      name: counter-pv-storage
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
+```
 
-En lloc de fer servir un volum compartit entre les diferents replicas, fes servir un volum x replica (aquesta prova fela tant amb el deployment com amb els statefulsets). No hauria d'implicar gaire canvi del q tens. Hauries d'observar un comportament diferent al atacar al service del deployment vs al atacar el headles service dels statefulset.
-
-EmptyDir volume storage information [here](https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/).
+We try to deploy:
+```
+kubectl apply -f counter-deployment.yaml 
+error: error validating "counter-deployment.yaml": error validating data: ValidationError(Deployment.spec): unknown field "volumeClaimTemplates" in io.k8s.api.apps.v1.DeploymentSpec; if you choose to ignore these errors, turn validation off with --validate=false
+```
+The deployment spec does not have volumeClaimTemplates.
 
 
