@@ -356,3 +356,17 @@ Counter incremented:  1
 # curl counter-statefulset-1.counter-hlservice:8080
 Counter incremented:  1
 ```
+
+To debug the templates:
+
+```
+helm template --debug task7-helm
+```
+
+To list the helm packages installed and uninstall:
+```
+helm list
+NAME            NAMESPACE       REVISION        UPDATED                                 STATUS          CHART                   APP VERSION
+task7-test      default         1               2021-03-11 15:26:41.381584501 +0100 CET deployed        task7-helm-0.1.0        1.16.0
+helm uninstall task7-test
+```
