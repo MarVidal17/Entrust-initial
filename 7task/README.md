@@ -291,4 +291,43 @@ error: error validating "counter-deployment.yaml": error validating data: Valida
 ```
 The deployment spec does not have volumeClaimTemplates.
 
+## 7.5. Go code
+
+Implementar un codi go que simplement faci un print dient alguna cosa.
+
+```
+kind delete cluster
+go build print-hour.go
+docker build -t print-hour .
+kind create cluster
+kind load docker-image print-hour:latest
+```
+
+## 7.6. Cronjob
+
+```
+kubectl apply -f cronjob.yaml
+kubectl get cronjob
+NAME    SCHEDULE      SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+hello   */1 * * * *   False     1        18s             24s
+```
+
+Check the pods and logs:
+```
+kubectl get pods                   
+NAME                     READY   STATUS      RESTARTS   AGE
+hello-1615463700-8ff7h   0/1     Completed   0          2m35s
+hello-1615463760-q4h95   0/1     Completed   0          95s
+hello-1615463820-bb47s   0/1     Completed   0          35s
+kubectl logs hello-1615463700-8ff7h
+2021/03/11 11:55:06 Hello! ~  2021-03-11 11:55:06.03077868 +0000 UTC m=+0.000081970
+kubectl logs hello-1615463760-q4h95
+2021/03/11 11:56:06 Hello! ~  2021-03-11 11:56:06.111548431 +0000 UTC m=+0.000054434
+kubectl logs hello-1615463820-bb47s
+2021/03/11 11:57:06 Hello! ~  2021-03-11 11:57:06.189119914 +0000 UTC m=+0.000054289
+```
+
+## 7.7. Helm chart
+
+Crear un helm chart que empaqueti tant el deployment, com l'statefulset i el cronjob.
 
