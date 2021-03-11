@@ -331,3 +331,28 @@ kubectl logs hello-1615463820-bb47s
 
 Crear un helm chart que empaqueti tant el deployment, com l'statefulset i el cronjob.
 
+Create helm directory and its files. Then:
+```
+helm install -f task7-helm/values.yaml task7-test ./task7-helm/
+NAME: task7-test
+LAST DEPLOYED: Thu Mar 11 15:26:41 2021
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+kubectl get pods                            
+NAME                                READY   STATUS      RESTARTS   AGE
+counter-deployment-bcd4d595-8jx76   1/1     Running     0          2m9s
+counter-deployment-bcd4d595-jd9dn   1/1     Running     0          2m9s
+counter-deployment-bcd4d595-t2grz   1/1     Running     0          2m9s
+counter-statefulset-0               1/1     Running     0          2m9s
+counter-statefulset-1               1/1     Running     0          2m8s
+counter-statefulset-2               1/1     Running     0          2m
+hello-1615472820-wx8m9              0/1     Completed   0          105s
+hello-1615472880-58nz6              0/1     Completed   0          45s
+kubectl exec -it counter-statefulset-0 -- sh
+# curl counter-statefulset-2.counter-hlservice:8080 
+Counter incremented:  1
+# curl counter-statefulset-1.counter-hlservice:8080
+Counter incremented:  1
+```

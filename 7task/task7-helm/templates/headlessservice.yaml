@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: counter-hlservice
+  labels:
+    app: counter-statefulset
+spec:
+  clusterIP: None
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+  selector:
+    app: counter-statefulset
