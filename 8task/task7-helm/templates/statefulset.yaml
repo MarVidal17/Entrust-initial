@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: counter-statefulset
+  labels:
+    app: counter-statefulset
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: counter-statefulset
+  serviceName: "counter-hlservice"
+  template:
+    metadata:
+      labels:
+        name: counter-statefulset
+        app: counter-statefulset
+    spec:
+      containers:
+      - name: counter
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.image.containerPort }}
+        volumeMounts:
+        - name: counter-pvs-statefulset
+          mountPath: {{ .Values.image.volumeMounts.mountPath }}
+  volumeClaimTemplates:
+  - metadata:
+      name: counter-pvs-statefulset
+    spec:
+      accessModes:
+      - {{ .Values.pvc.accesMode }}
+      resources:
+        requests:
+          storage: {{ .Values.pvc.storage }}

@@ -1,0 +1,10 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: counter-pvc
+spec:
+  accessModes:
+  - {{ .Values.pvc.accesMode }}
+  resources:
+    requests:
+      storage: {{ .Values.pvc.storage }}

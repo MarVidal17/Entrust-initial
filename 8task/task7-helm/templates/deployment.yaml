@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: counter-deployment
+  labels:
+    app: counter
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: counter
+  template:
+    metadata:
+      labels:
+        name: counter
+        app: counter
+    spec:
+      containers:
+      - name: counter
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+          - name: http
+            containerPort: {{ .Values.image.containerPort }}
+            protocol: TCP
+        volumeMounts:
+        - name: {{ .Values.volume.name }}
+          mountPath: {{ .Values.image.volumeMounts.mountPath }}
+      volumes:
+      - name: {{ .Values.volume.name }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.volume.claimName }}
