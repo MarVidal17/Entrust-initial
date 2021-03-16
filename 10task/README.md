@@ -4,14 +4,13 @@ Create with terraform a vsphere machine.
 
 https://registry.terraform.io/providers/hashicorp/vsphere/latest/docs/resources/virtual_machine
 
-6 tipus de data: vsphere_datacenter, vsphere_compute_cluster, vsphere_datastore, vsphere_resource_pool, vsphere_network i el resource de la vm que es: vsphere_virtual_machine
+6 tipus de data: vsphere_datacenter, vsphere_compute_cluster, vsphere_datastore, vsphere_resource_pool, vsphere_network i vsphere_virtual_machine (template) + el resource de la vm que és: vsphere_virtual_machine.
 
-defineixis un output x coneixer la ip de la maquina
+Definir un output x coneixer la ip de la maquina.
 
-la vm_ip hauries de vigilar que no estigui ocupada
-per checkearho entres a la web del vsphere
-i el nom de la vm sempre posem al final l'ultim cap de la ip
-si es 10.34.22.96, doncs el nom es <algo>96
+
+Variable vm_ip hauries de vigilar que no estigui ocupada. Fer el check entrant  a la web del vsphere.
+Nom de la vm sempre posem al final l'últim cap de la ip, si es 10.34.22.96, doncs el nom és algo96.
 
 1. Configure ssh pubkic key in virtual machine template.
 
