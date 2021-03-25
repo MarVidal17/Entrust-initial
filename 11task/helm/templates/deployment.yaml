@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: martest-deployment
+  labels:
+    app: {{ .Values.app.name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        name: {{ .Values.app.name }}
+        app: {{ .Values.app.name }}
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-pre-populate: "false"
+        vault.hashicorp.com/role: {{.Values.serviceAccountName}}
+        vault.hashicorp.com/auth-path: "auth/kubernetes-{{.Values.serviceAccountName}}-{{.Values.app.clusterName}}"
+        vault.hashicorp.com/secret-volume-path: "/home/pkihub/secrets"
+        # This field is necessary to apply the template, however we are overwriting the path on the template field
+        vault.hashicorp.com/agent-inject-secret-pkihub: martest-secrets
+        vault.hashicorp.com/agent-inject-template-pkihub: |
+          {{- printf `
+          {{- with secret "%s" }}
+          {{ .Data.secretname }}={{ .Data.secretvalue }}
+          {{ end }}` .Values.secretsPath.mysecret}}
+    spec:
+      serviceAccountName: {{.Values.serviceAccountName}}
+      containers:
+      - name: {{ .Values.app.name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}

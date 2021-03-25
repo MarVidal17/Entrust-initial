@@ -1,0 +1,11 @@
+app:
+  name: martest
+  clusterName: pkihub-local
+image:
+  pullPolicy: IfNotPresent
+  repository: green
+  tag: latest
+replicaCount: 1
+secretsPath:
+  mysecret: secret/pkihub/martest/somepassword
+serviceAccountName: martest
